@@ -1,2 +1,7 @@
-# elm-2d-game-examples
-Some examples for using [my little 2d game library](https://github.com/Zinggi/elm-2d-game).
+# Examples
+
+## Instructions
+TODO
+
+## Acknowledgements
+Resources were taken from http://opengameart.org/content/platformer-art-deluxe
