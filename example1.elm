@@ -4,9 +4,6 @@ import Color
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.App exposing (program)
-import WebGL exposing (Texture)
-import Task
-import Dict exposing (Dict)
 import AnimationFrame
 
 
@@ -15,40 +12,32 @@ import AnimationFrame
 import Game.TwoD.Camera as Camera exposing (Camera)
 import Game.TwoD.Render as Render
 import Game.TwoD as Game
-import Helpers exposing (..)
+import Game.Resources as Resources exposing (Resources)
 
 
 type alias Model =
     { camera : Camera {}
-    , textures : Dict String Texture
     , time : Float
+    , resources : Resources
     }
 
 
 type Msg
     = Tick Float
-    | LoadTexture String Texture
-    | FailedToLoadTexture String
+    | Resources Resources.Msg
 
 
 init : ( Model, Cmd Msg )
 init =
     { camera = Camera.init ( 1, 1 ) 10
-    , textures = Dict.empty
+    , resources = Resources.init
     , time = 0
     }
-        ! [ loadTextures FailedToLoadTexture LoadTexture [ "images/box.png", "images/guy.png" ] ]
+        ! [ Cmd.map Resources (Resources.loadTextures [ "images/box.png", "images/guy.png" ]) ]
 
 
 subs m =
     AnimationFrame.diffs Tick
-
-
-loadTexture url msg =
-    Task.perform
-        (\e -> Debug.crash ("texture loading failed: " ++ toString e))
-        msg
-        (WebGL.loadTexture url)
 
 
 renderRect size ( x, y ) isRed =
@@ -73,24 +62,21 @@ renderBar r =
         }
 
 
-renderBox ( w, h ) ( x, y ) r tileY tex =
+renderBox res ( w, h ) ( x, y ) r tileY =
     Render.spriteWithOptions
         { size = ( w, h )
         , position = ( x, y, 0 )
         , rotation = r
         , pivot = ( 0.5, 0.5 )
         , tiling = ( 1, tileY )
-        , texture = tex
+        , texture = (Resources.getTexture "images/box.png" res)
         }
 
 
 update msg model =
     case msg of
-        LoadTexture url t ->
-            { model | textures = Dict.insert url t model.textures } ! []
-
-        FailedToLoadTexture url ->
-            Debug.crash ("Failed to load texture: \"" ++ url ++ "\"")
+        Resources msg ->
+            { model | resources = Resources.update msg model.resources } ! []
 
         Tick dt ->
             { model | time = model.time + dt } ! []
@@ -106,18 +92,18 @@ view m =
         , renderRect ( 1, 2 ) ( 1, 0 ) False
         , renderBar 0
         , renderBar (1 / 4)
-        , renderBox ( 1, 3 ) ( 2, 0 ) 0 3 (Dict.get "images/box.png" m.textures)
-        , renderGuy (Dict.get "images/guy.png" m.textures) ( -2, 0 ) 1 1000
-        , renderGuy (Dict.get "images/guy.png" m.textures) ( -3, 0 ) -1 1080
-        , renderBox ( 0.5, 0.5 ) ( -1, 0 ) (0.001 * m.time) 1 (Dict.get "images/box.png" m.textures)
+        , renderBox m.resources ( 1, 3 ) ( 2, 0 ) 0 3
+        , renderGuy m.resources ( -2, 0 ) 1 1000
+        , renderGuy m.resources ( -3, 0 ) -1 1080
+        , renderBox m.resources ( 0.5, 0.5 ) ( -1, 0 ) (0.001 * m.time) 1
         ]
 
 
-renderGuy tex ( x, y ) flip d =
+renderGuy res ( x, y ) flip d =
     Render.animatedSpriteWithOptions
         { position = ( x, y, 0 )
         , size = ( flip * 1, 1.5 )
-        , texture = tex
+        , texture = Resources.getTexture "images/guy.png" res
         , bottomLeft = ( 0, 0 )
         , topRight = ( 1, 1 )
         , duration = d

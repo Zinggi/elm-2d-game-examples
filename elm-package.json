@@ -1,11 +1,12 @@
 {
     "version": "1.0.0",
-    "summary": "helpful summary of your project, less than 80 characters",
-    "repository": "https://github.com/user/project.git",
+    "summary": "examples of using the elm-2d-game library",
+    "repository": "https://github.com/Zinggi/elm-2d-game-examples.git",
     "license": "BSD3",
     "source-directories": [
         ".",
-        "../game-2d/src"
+        "../game-2d/src",
+        "../game-resources/src"
     ],
     "exposed-modules": [],
     "dependencies": {

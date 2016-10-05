@@ -4,17 +4,14 @@ import Html exposing (Html, div)
 import Html.Attributes as Attr
 import Html.App as App
 import Task
-import Color
-import Dict exposing (Dict)
 import AnimationFrame
 import Window
 import Keyboard.Extra
-import WebGL exposing (Texture)
 
 
 --
 
-import Helpers exposing (..)
+import Game.Resources as Resources exposing (Resources)
 import Game.TwoD.Render as Render exposing (Renderable)
 import Game.TwoD as Game
 import Game.TwoD.Camera as Camera exposing (Camera)
@@ -24,12 +21,7 @@ import Game.TwoD.Camera as Camera exposing (Camera)
 
 This is a copy of the original Mario game example previously found on the examples for elm.
 
-I made some modifications, but it still is essentially the same, except now with my library.
-
-The changes are:
-    - add texture to model, since we need to load them.
-    -
-
+I made some modifications, but it still is essentially the same, except now with my library and other textures.
 -}
 
 
@@ -40,8 +32,7 @@ The changes are:
 type Msg
     = ScreenSize Window.Size
     | Tick Float
-    | LoadTexture String Texture
-    | FailedToLoadTexture String
+    | Resources Resources.Msg
     | Keys Keyboard.Extra.Msg
 
 
@@ -51,7 +42,7 @@ type Msg
 
 type alias Model =
     { mario : Mario
-    , textures : Dict String Texture
+    , resources : Resources
     , keys : Keyboard.Extra.Model
     , time : Float
     , screen : ( Int, Int )
@@ -90,14 +81,14 @@ init =
             Keyboard.Extra.init
     in
         { mario = mario
-        , textures = Dict.empty
+        , resources = Resources.init
         , keys = keys
         , time = 0
         , screen = ( 800, 600 )
         , camera = Camera.init ( 0, 0 ) 13
         }
             ! [ getScreenSize
-              , loadTextures FailedToLoadTexture LoadTexture [ "images/guy.png", "images/grass.png", "images/cloud_bg.png" ]
+              , Cmd.map Resources (Resources.loadTextures [ "images/guy.png", "images/grass.png", "images/cloud_bg.png" ])
               , Cmd.map Keys cmd
               ]
 
@@ -124,11 +115,8 @@ update msg model =
             }
                 ! []
 
-        LoadTexture id texture ->
-            { model | textures = Dict.insert id texture model.textures } ! []
-
-        FailedToLoadTexture _ ->
-            Debug.crash "You should probably handle this case better in a real game"
+        Resources msg ->
+            { model | resources = Resources.update msg model.resources } ! []
 
         Keys keyMsg ->
             let
@@ -197,40 +185,41 @@ walk keys mario =
 
 
 render : Model -> List Renderable
-render { mario, textures, camera } =
+render { mario, resources, camera } =
     List.concat
-        [ renderBackground textures
+        [ renderBackground resources
         , [ Render.spriteWithOptions
                 { position = ( -10, -10, 0 )
                 , size = ( 20, 10 )
-                , texture = Dict.get "images/grass.png" textures
+                , texture = Resources.getTexture "images/grass.png" resources
                 , rotation = 0
                 , pivot = ( 0, 0 )
                 , tiling = ( 10, 5 )
                 }
-          , renderMario textures mario
+          , renderMario resources mario
           ]
         ]
 
 
-renderBackground textures =
+renderBackground : Resources -> List Renderable
+renderBackground resources =
     [ Render.parallaxScroll
         { z = -0.99
-        , texture = Dict.get "images/cloud_bg.png" textures
+        , texture = Resources.getTexture "images/cloud_bg.png" resources
         , tileWH = ( 1, 1 )
         , scrollSpeed = ( 0.1, 0 )
         }
     , Render.parallaxScroll
         { z = -0.98
-        , texture = Dict.get "images/cloud_bg.png" textures
+        , texture = Resources.getTexture "images/cloud_bg.png" resources
         , tileWH = ( 1.4, 1.4 )
         , scrollSpeed = ( 0.2, 0.1 )
         }
     ]
 
 
-renderMario : Dict String Texture -> Mario -> Renderable
-renderMario textures { x, y, dir } =
+renderMario : Resources -> Mario -> Renderable
+renderMario resources { x, y, dir } =
     let
         d =
             if dir == Left then
@@ -241,7 +230,7 @@ renderMario textures { x, y, dir } =
         Render.animatedSpriteWithOptions
             { position = ( x, y, 0 )
             , size = ( d * 0.25, 0.8 )
-            , texture = Dict.get "images/guy.png" textures
+            , texture = Resources.getTexture "images/guy.png" resources
             , bottomLeft = ( 0, 0 )
             , topRight = ( 1, 1 )
             , duration = 1
