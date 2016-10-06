@@ -60,7 +60,7 @@ tick dt { position, velocity } =
 
 view : Model -> Html Msg
 view m =
-    Game.renderCentered { time = 0, camera = Camera.init ( 0, 1.5 ) 5, size = ( 800, 600 ) }
+    Game.renderCentered { time = 0, camera = Camera.fixedHeight 7 ( 0, 1.5 ), size = ( 800, 600 ) }
         [ Render.rectangle { color = Color.blue, position = m.position, size = ( 0.2, 0.2 ) }
         , Render.rectangle { color = Color.green, position = ( -10, -10 ), size = ( 20, 10 ) }
         ]

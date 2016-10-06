@@ -16,10 +16,14 @@ import Game.Resources as Resources exposing (Resources)
 
 
 type alias Model =
-    { camera : Camera {}
-    , time : Float
+    { time : Float
     , resources : Resources
     }
+
+
+camera : Camera
+camera =
+    Camera.fixedWidth 10 ( 1, 1 )
 
 
 type Msg
@@ -29,8 +33,7 @@ type Msg
 
 init : ( Model, Cmd Msg )
 init =
-    { camera = Camera.init ( 1, 1 ) 10
-    , resources = Resources.init
+    { resources = Resources.init
     , time = 0
     }
         ! [ Cmd.map Resources (Resources.loadTextures [ "images/box.png", "images/guy.png" ]) ]
@@ -87,7 +90,7 @@ view m =
     Game.renderCenteredWithOptions
         [ style [ ( "background-color", "aliceblue" ) ] ]
         [ style [ ( "border", "cadetblue" ), ( "border-style", "solid" ) ] ]
-        { time = m.time, camera = m.camera, size = ( 800, 600 ) }
+        { time = m.time, cameraFn = Camera.view camera, size = ( 800, 600 ) }
         [ renderRect ( 1, 1 ) ( 0, 0 ) True
         , renderRect ( 1, 2 ) ( 1, 0 ) False
         , renderBar 0
