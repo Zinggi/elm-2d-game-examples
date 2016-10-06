@@ -46,7 +46,7 @@ type alias Model =
     , keys : Keyboard.Extra.Model
     , time : Float
     , screen : ( Int, Int )
-    , camera : Camera {}
+    , camera : Camera
     }
 
 
@@ -85,7 +85,7 @@ init =
         , keys = keys
         , time = 0
         , screen = ( 800, 600 )
-        , camera = Camera.init ( 0, 0 ) 13
+        , camera = Camera.fixedWidth 13 ( 0, 0 )
         }
             ! [ getScreenSize
               , Cmd.map Resources (Resources.loadTextures [ "images/guy.png", "images/grass.png", "images/cloud_bg.png" ])
