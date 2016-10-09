@@ -85,7 +85,7 @@ init =
         , keys = keys
         , time = 0
         , screen = ( 800, 600 )
-        , camera = Camera.fixedWidth 13 ( 0, 0 )
+        , camera = Camera.fixedWidth 15 ( 0, 0 )
         }
             ! [ getScreenSize
               , Cmd.map Resources (Resources.loadTextures [ "images/guy.png", "images/grass.png", "images/cloud_bg.png" ])
@@ -207,13 +207,13 @@ renderBackground resources =
         { z = -0.99
         , texture = Resources.getTexture "images/cloud_bg.png" resources
         , tileWH = ( 1, 1 )
-        , scrollSpeed = ( 0.1, 0 )
+        , scrollSpeed = ( 0.25, 0.25 )
         }
     , Render.parallaxScroll
         { z = -0.98
         , texture = Resources.getTexture "images/cloud_bg.png" resources
         , tileWH = ( 1.4, 1.4 )
-        , scrollSpeed = ( 0.2, 0.1 )
+        , scrollSpeed = ( 0.5, 0.5 )
         }
     ]
 

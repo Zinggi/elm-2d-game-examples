@@ -90,7 +90,7 @@ view m =
     Game.renderCenteredWithOptions
         [ style [ ( "background-color", "aliceblue" ) ] ]
         [ style [ ( "border", "cadetblue" ), ( "border-style", "solid" ) ] ]
-        { time = m.time, cameraFn = Camera.view camera, size = ( 800, 600 ) }
+        { time = m.time, camera = camera, size = ( 800, 600 ) }
         [ renderRect ( 1, 1 ) ( 0, 0 ) True
         , renderRect ( 1, 2 ) ( 1, 0 ) False
         , renderBar 0
