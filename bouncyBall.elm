@@ -1,8 +1,7 @@
-module Example2 exposing (..)
+module BouncyBall exposing (..)
 
 import Color
 import Html exposing (..)
-import Html.App exposing (program)
 import AnimationFrame
 
 
@@ -46,14 +45,14 @@ tick dt { position, velocity } =
         ( ( x, y ), ( vx, vy ) ) =
             ( position, velocity )
 
-        vy' =
+        vy_ =
             vy - 9.81 * dt
 
         ( newP, newV ) =
             if y <= 0 then
-                ( ( x, 0.00001 ), ( 0, -vy' * 0.9 ) )
+                ( ( x, 0.00001 ), ( 0, -vy_ * 0.9 ) )
             else
-                ( ( x, y + vy' * dt ), ( 0, vy' ) )
+                ( ( x, y + vy_ * dt ), ( 0, vy_ ) )
     in
         Model newP newV
 
@@ -66,7 +65,7 @@ view m =
         ]
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
     program
         { view = view

@@ -2,7 +2,6 @@ module MarioLike exposing (..)
 
 import Html exposing (Html, div)
 import Html.Attributes as Attr
-import Html.App as App
 import Task
 import AnimationFrame
 import Window
@@ -252,9 +251,9 @@ view ({ time, screen } as model) =
         ]
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
-    App.program
+    Html.program
         { update = update
         , init = init
         , view = view
@@ -264,7 +263,7 @@ main =
 
 getScreenSize : Cmd Msg
 getScreenSize =
-    Task.perform (\_ -> Debug.crash "won't happen") ScreenSize (Window.size)
+    Task.perform ScreenSize (Window.size)
 
 
 subs : Model -> Sub Msg

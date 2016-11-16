@@ -3,7 +3,6 @@ module Example1 exposing (..)
 import Color
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.App exposing (program)
 import AnimationFrame
 
 
@@ -116,7 +115,7 @@ renderGuy res ( x, y ) flip d =
         }
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
     program
         { view = view
