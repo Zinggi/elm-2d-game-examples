@@ -84,7 +84,7 @@ init =
         , keys = keys
         , time = 0
         , screen = ( 800, 600 )
-        , camera = Camera.fixedWidth 15 ( 0, 0 )
+        , camera = Camera.fixedWidth 8 ( 0, 0 )
         }
             ! [ getScreenSize
               , Cmd.map Resources (Resources.loadTextures [ "images/guy.png", "images/grass.png", "images/cloud_bg.png" ])
@@ -228,7 +228,7 @@ renderMario resources { x, y, dir } =
     in
         Render.animatedSpriteWithOptions
             { position = ( x, y, 0 )
-            , size = ( d * 0.25, 0.8 )
+            , size = ( d * 0.3, 0.8 )
             , texture = Resources.getTexture "images/guy.png" resources
             , bottomLeft = ( 0, 0 )
             , topRight = ( 1, 1 )
