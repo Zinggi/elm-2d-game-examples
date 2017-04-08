@@ -8,7 +8,7 @@ import AnimationFrame
 --
 
 import Game.TwoD.Camera as Camera exposing (Camera)
-import Game.TwoD.Render as Render
+import Game.TwoD.Render as Render exposing (Renderable, rectangle, circle)
 import Game.TwoD as Game
 
 
@@ -60,8 +60,8 @@ tick dt { position, velocity } =
 view : Model -> Html Msg
 view m =
     Game.renderCentered { time = 0, camera = Camera.fixedHeight 7 ( 0, 1.5 ), size = ( 800, 600 ) }
-        [ Render.rectangle { color = Color.blue, position = m.position, size = ( 0.2, 0.2 ) }
-        , Render.rectangle { color = Color.green, position = ( -10, -10 ), size = ( 20, 10 ) }
+        [ Render.shape rectangle { color = Color.green, position = ( -10, -10 ), size = ( 20, 10 ) }
+        , Render.shape circle { color = Color.blue, position = m.position, size = ( 0.5, 0.5 ) }
         ]
 
 

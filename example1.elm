@@ -9,7 +9,7 @@ import AnimationFrame
 --
 
 import Game.TwoD.Camera as Camera exposing (Camera)
-import Game.TwoD.Render as Render
+import Game.TwoD.Render as Render exposing (Renderable, rectangle, ring)
 import Game.TwoD as Game
 import Game.Resources as Resources exposing (Resources)
 
@@ -42,8 +42,8 @@ subs m =
     AnimationFrame.diffs Tick
 
 
-renderRect size ( x, y ) isRed =
-    Render.rectangle
+renderRect shape size ( x, y ) isRed =
+    Render.shape shape
         { position = ( x, y )
         , size = size
         , color =
@@ -55,7 +55,7 @@ renderRect size ( x, y ) isRed =
 
 
 renderBar r =
-    Render.rectangleWithOptions
+    Render.shapeWithOptions rectangle
         { position = ( 0, -0.01, 0 )
         , rotation = (r * pi * 2)
         , size = ( 3, 0.02 )
@@ -90,14 +90,14 @@ view m =
         [ style [ ( "background-color", "aliceblue" ) ] ]
         [ style [ ( "border", "cadetblue" ), ( "border-style", "solid" ) ] ]
         { time = m.time, camera = camera, size = ( 800, 600 ) }
-        [ renderRect ( 1, 1 ) ( 0, 0 ) True
-        , renderRect ( 1, 2 ) ( 1, 0 ) False
+        [ renderRect ring ( 1, 1 ) ( 0, 0 ) True
+        , renderRect rectangle ( 1, 2 ) ( 1, 0 ) False
         , renderBar 0
         , renderBar (1 / 4)
-        , renderBox m.resources ( 1, 3 ) ( 2, 0 ) 0 3
-        , renderGuy m.resources ( -2, 0 ) 1 1000
-        , renderGuy m.resources ( -3, 0 ) -1 1080
-        , renderBox m.resources ( 0.5, 0.5 ) ( -1, 0 ) (0.001 * m.time) 1
+        , renderBox m.resources ( 1, 3 ) ( 2.5, 1.5 ) 0 3
+        , renderGuy m.resources ( -1.5, 0 ) 1 1000
+        , renderGuy m.resources ( -2.5, 0 ) -1 1080
+        , renderBox m.resources ( 0.5, 0.5 ) ( -0.75, 0.25 ) (0.001 * m.time) 1
         ]
 
 
