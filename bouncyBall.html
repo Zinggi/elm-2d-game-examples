@@ -11013,7 +11013,7 @@ var _elm_community$webgl$Native_WebGL = function () {
   */
   function makeSequentialBuffer(numIndices) {
     var indices = new Uint16Array(numIndices);
-    for (var i = 0; i < numIndices; i += 1) {
+    for (var i = 0; i < numIndices; i++) {
       indices[i] = i;
     }
     return indices;
@@ -11127,7 +11127,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
       var numAttributes = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
 
-      for (var i = 0; i < numAttributes; i += 1) {
+      for (var i = 0; i < numAttributes; i++) {
         var attribute = gl.getActiveAttrib(program, i);
 
         var attribLocation = gl.getAttribLocation(program, attribute.name);
@@ -11160,7 +11160,6 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
   function createUniformSetters(gl, model, program) {
-
     var textureCounter = 0;
     function createUniformSetter(program, uniform) {
       var uniformLocation = gl.getUniformLocation(program, uniform.name);
@@ -11190,23 +11189,15 @@ var _elm_community$webgl$Native_WebGL = function () {
             gl.uniformMatrix4fv(uniformLocation, false, value);
           };
         case gl.SAMPLER_2D:
-          var currentTexture = textureCounter;
-          var activeName = 'TEXTURE' + currentTexture;
-          textureCounter += 1;
-          return function (value) {
-            var texture = value;
-            var tex = undefined;
-            if (texture.id) {
-              tex = model.cache.textures[texture.id];
-            } else {
-              texture.id = guid();
-            }
+          var currentTexture = textureCounter++;
+          return function (texture) {
+            gl.activeTexture(gl.TEXTURE0 + currentTexture);
+            var tex = model.cache.textures[texture.id];
             if (!tex) {
               LOG('Created texture');
               tex = texture.createTexture(gl);
               model.cache.textures[texture.id] = tex;
             }
-            gl.activeTexture(gl[activeName]);
             gl.bindTexture(gl.TEXTURE_2D, tex);
             gl.uniform1i(uniformLocation, currentTexture);
           };
@@ -11222,7 +11213,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
     var uniformSetters = {};
     var numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-    for (var i = 0; i < numUniforms; i += 1) {
+    for (var i = 0; i < numUniforms; i++) {
       var uniform = gl.getActiveUniform(program, i);
       uniformSetters[uniform.name] = createUniformSetter(program, uniform);
     }
@@ -11752,6 +11743,20 @@ var _Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitSquare = _elm_community$we
 			_1: {ctor: '[]'}
 		}
 	});
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitTriangle = _elm_community$webgl$WebGL$triangles(
+	{
+		ctor: '::',
+		_0: {
+			ctor: '_Tuple3',
+			_0: _Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$Vertex(
+				A2(_elm_community$linear_algebra$Math_Vector2$vec2, 0, 0)),
+			_1: _Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$Vertex(
+				A2(_elm_community$linear_algebra$Math_Vector2$vec2, 0, 1)),
+			_2: _Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$Vertex(
+				A2(_elm_community$linear_algebra$Math_Vector2$vec2, 1, 0))
+		},
+		_1: {ctor: '[]'}
+	});
 
 /*
  * Copyright (c) 2010 Mozilla Corporation
@@ -11995,8 +12000,10 @@ var _elm_community$linear_algebra$Math_Vector4$getX = _elm_community$linear_alge
 var _elm_community$linear_algebra$Math_Vector4$vec4 = _elm_community$linear_algebra$Native_Math_Vector4.vec4;
 var _elm_community$linear_algebra$Math_Vector4$Vec4 = {ctor: 'Vec4'};
 var _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$vertParallaxScroll = {'src': '\nattribute vec2 position;\n\nuniform vec2 cameraPos;\nuniform vec2 cameraSize;\nuniform vec2 scrollSpeed;\nuniform vec2 offset;\nuniform float z;\n\nvarying vec2 vcoord;\n\nvoid main()\n{\n    vcoord =\n        (position - vec2(0.5, 0.5)) // offset to middle of texture\n        * normalize(cameraSize) // scale to keep aspect ratio\n        - offset // apply offset\n        + cameraPos * 0.05 * scrollSpeed;\n\n    gl_Position = vec4(position*2.0 - vec2(1.0, 1.0), -z, 1);\n}\n'};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragUniColor = {'src': '\n\nprecision mediump float;\n\nuniform vec3 color;\n\nvoid main() {\n    gl_FragColor = vec4(color, 1);\n}\n'};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$vertColoredRect = {'src': '\nattribute vec2 position;\n\nuniform mat4 transform;\nuniform mat4 cameraProj;\n\nvoid main() {\n    gl_Position = cameraProj*transform*vec4(position, 0, 1);\n}\n'};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragUniColorRing = {'src': '\n\nprecision mediump float;\n\nuniform vec3 color;\nvarying vec2 vcoord;\n\nvoid main () {\n  float dist = length(vec2(0.5, 0.5) - vcoord);\n\n  float alpha = smoothstep(0.5, 0.5 - 0.01, dist) * smoothstep(0.49 - 0.01, 0.49, dist);\n  vec4 color = vec4(color, alpha);\n\n  gl_FragColor = color;\n}\n'};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragUniColorCircle = {'src': '\n\nprecision mediump float;\n\nuniform vec3 color;\nvarying vec2 vcoord;\n\nvoid main () {\n  float dist = length(vec2(0.5, 0.5) - vcoord);\n\n  float alpha = smoothstep(0.5 - 0.01, 0.5, dist);\n  vec4 color = vec4(color, 1.0 - alpha);\n\n  gl_FragColor = color;\n}\n'};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragUniColor = {'src': '\n\nprecision mediump float;\n\nuniform vec3 color;\nvarying vec2 vcoord;\n\nvoid main() {\n    gl_FragColor = vec4(color, 1);\n}\n'};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$vertColoredShape = {'src': '\nattribute vec2 position;\n\nuniform mat4 transform;\nuniform mat4 cameraProj;\nvarying vec2 vcoord;\nvoid main() {\n    gl_Position = cameraProj*transform*vec4(position, 0, 1);\n    vcoord = position.xy;\n}\n'};
 var _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragAnimTextured = {'src': '\n\nprecision mediump float;\n\nuniform sampler2D texture;\nuniform vec2 bottomLeft;\nuniform vec2 topRight;\nuniform int numberOfFrames;\nuniform float duration;\nuniform float time;\nvarying vec2 vcoord;\n\nvoid main () {\n    float n = float(numberOfFrames);\n    float framePos = floor((mod(time, duration) / duration) * n );\n    vec2 stripSize = topRight - bottomLeft;\n    vec2 frameSize = vec2(stripSize.x / n, stripSize.y);\n    vec2 texCoord = bottomLeft + vec2(frameSize.x * framePos, 0) + vcoord * frameSize;\n\n    gl_FragColor = texture2D(texture, texCoord.xy);\n}\n'};
 var _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragTextured = {'src': '\n\nprecision mediump float;\n\nuniform sampler2D texture;\nuniform vec2 tileWH;\nvarying vec2 vcoord;\n\nvoid main () {\n    gl_FragColor = texture2D(texture, vcoord*tileWH);\n}\n'};
 var _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$vertTexturedRect = {'src': '\nattribute vec2 position;\n\nuniform mat4 transform;\nuniform mat4 cameraProj;\n\nvarying vec2 vcoord;\nvoid main () {\n    vec4 pos = cameraProj*transform*vec4(position, 0, 1);\n    gl_Position = pos;\n    vcoord = position.xy;\n}\n'};
@@ -12021,35 +12028,24 @@ var _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$makeTransform = F4(
 	function (_p4, rotation, _p3, _p2) {
 		var _p5 = _p4;
 		var _p6 = _p3;
-		var _p11 = _p6._0;
-		var _p10 = _p6._1;
 		var _p7 = _p2;
-		var _p9 = _p7._1;
-		var _p8 = _p7._0;
-		var trans = _elm_community$linear_algebra$Math_Matrix4$makeTranslate(
-			A3(_elm_community$linear_algebra$Math_Vector3$vec3, 0 - _p8, 0 - _p9, 0));
+		var pivot = _elm_community$linear_algebra$Math_Matrix4$makeTranslate(
+			A3(_elm_community$linear_algebra$Math_Vector3$vec3, 0 - _p7._0, 0 - _p7._1, 0));
 		var scale = _elm_community$linear_algebra$Math_Matrix4$makeScale(
-			A3(_elm_community$linear_algebra$Math_Vector3$vec3, _p11, _p10, 1));
+			A3(_elm_community$linear_algebra$Math_Vector3$vec3, _p6._0, _p6._1, 1));
 		var rot = A2(
 			_elm_community$linear_algebra$Math_Matrix4$makeRotate,
 			rotation,
 			A3(_elm_community$linear_algebra$Math_Vector3$vec3, 0, 0, 1));
-		var pivot = _elm_community$linear_algebra$Math_Matrix4$makeTranslate(
-			A2(
-				_elm_community$linear_algebra$Math_Vector3$add,
-				A3(_elm_community$linear_algebra$Math_Vector3$vec3, _p5._0, _p5._1, _p5._2),
-				A3(
-					_elm_community$linear_algebra$Math_Vector3$vec3,
-					_elm_lang$core$Basics$abs(_p11) * _p8,
-					_elm_lang$core$Basics$abs(_p10) * _p9,
-					0)));
+		var trans = _elm_community$linear_algebra$Math_Matrix4$makeTranslate(
+			A3(_elm_community$linear_algebra$Math_Vector3$vec3, _p5._0, _p5._1, _p5._2));
 		return A2(
 			_elm_community$linear_algebra$Math_Matrix4$mul,
 			A2(
 				_elm_community$linear_algebra$Math_Matrix4$mul,
-				A2(_elm_community$linear_algebra$Math_Matrix4$mul, pivot, rot),
+				A2(_elm_community$linear_algebra$Math_Matrix4$mul, trans, rot),
 				scale),
-			trans);
+			pivot);
 	});
 var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$renderTransparent = _elm_community$webgl$WebGL$entityWith(
 	{
@@ -12065,295 +12061,261 @@ var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$renderTransparent = _elm_commu
 			}),
 		_1: {ctor: '[]'}
 	});
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$toWebGl = F5(
-	function (time, camera, screenSize, cameraProj, object) {
-		var _p0 = object;
-		switch (_p0.ctor) {
-			case 'ColoredRectangle':
-				return A4(
-					_elm_community$webgl$WebGL$entity,
-					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$vertColoredRect,
-					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragUniColor,
-					_Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitSquare,
-					{transform: _p0._0.transform, color: _p0._0.color, cameraProj: cameraProj});
-			case 'TexturedRectangle':
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectWithFragment = F2(
+	function (frag, uniforms) {
+		return A4(_Zinggi$elm_2d_game_examples$Game_TwoD_Render$renderTransparent, _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$vertTexturedRect, frag, _Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitSquare, uniforms);
+	});
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$toWebGl = F4(
+	function (time, camera, screenSize, _p0) {
+		var _p1 = _p0;
+		return _p1._0(
+			{camera: camera, screenSize: screenSize, time: time});
+	});
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Renderable = function (a) {
+	return {ctor: 'Renderable', _0: a};
+};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$customFragment = F2(
+	function (makeUniforms, _p2) {
+		var _p3 = _p2;
+		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Renderable(
+			function (_p4) {
+				var _p5 = _p4;
 				return A4(
 					_Zinggi$elm_2d_game_examples$Game_TwoD_Render$renderTransparent,
 					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$vertTexturedRect,
+					_p3.fragmentShader,
+					_Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitSquare,
+					makeUniforms(
+						{
+							transform: A4(_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$makeTransform, _p3.position, _p3.rotation, _p3.size, _p3.pivot),
+							cameraProj: A2(_Zinggi$elm_2d_game_examples$Game_TwoD_Camera$view, _p5.camera, _p5.screenSize),
+							time: _p5.time
+						}));
+			});
+	});
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$veryCustom = _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Renderable;
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$shapeWithOptions = F2(
+	function (shape, _p6) {
+		var _p7 = _p6;
+		var _p8 = function () {
+			var _p9 = shape;
+			switch (_p9.ctor) {
+				case 'Rectangle':
+					return {ctor: '_Tuple2', _0: _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragUniColor, _1: _Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitSquare};
+				case 'Triangle':
+					return {ctor: '_Tuple2', _0: _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragUniColor, _1: _Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitTriangle};
+				case 'Circle':
+					return {ctor: '_Tuple2', _0: _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragUniColorCircle, _1: _Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitSquare};
+				default:
+					return {ctor: '_Tuple2', _0: _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragUniColorRing, _1: _Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitSquare};
+			}
+		}();
+		var frag = _p8._0;
+		var attribs = _p8._1;
+		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$veryCustom(
+			function (_p10) {
+				var _p11 = _p10;
+				return A4(
+					_Zinggi$elm_2d_game_examples$Game_TwoD_Render$renderTransparent,
+					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$vertColoredShape,
+					frag,
+					attribs,
+					{
+						transform: A4(_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$makeTransform, _p7.position, _p7.rotation, _p7.size, _p7.pivot),
+						color: _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$colorToRGBVector(_p7.color),
+						cameraProj: A2(_Zinggi$elm_2d_game_examples$Game_TwoD_Camera$view, _p11.camera, _p11.screenSize)
+					});
+			});
+	});
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$shapeZ = F2(
+	function (shape, _p12) {
+		var _p13 = _p12;
+		return A2(
+			_Zinggi$elm_2d_game_examples$Game_TwoD_Render$shapeWithOptions,
+			shape,
+			{
+				color: _p13.color,
+				position: _p13.position,
+				size: _p13.size,
+				rotation: 0,
+				pivot: {ctor: '_Tuple2', _0: 0, _1: 0}
+			});
+	});
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$shape = F2(
+	function (shape, _p14) {
+		var _p15 = _p14;
+		var _p16 = _p15.position;
+		var x = _p16._0;
+		var y = _p16._1;
+		return A2(
+			_Zinggi$elm_2d_game_examples$Game_TwoD_Render$shapeZ,
+			shape,
+			{
+				size: _p15.size,
+				position: {ctor: '_Tuple3', _0: x, _1: y, _2: 0},
+				color: _p15.color
+			});
+	});
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Ring = {ctor: 'Ring'};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$ring = _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Ring;
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Circle = {ctor: 'Circle'};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$circle = _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Circle;
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Triangle = {ctor: 'Triangle'};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$triangle = _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Triangle;
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Rectangle = {ctor: 'Rectangle'};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangle = _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Rectangle;
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$spriteWithOptions = function (_p17) {
+	var _p18 = _p17;
+	var _p23 = _p18.size;
+	var _p22 = _p18.position;
+	var _p19 = _p18.texture;
+	if (_p19.ctor === 'Just') {
+		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$veryCustom(
+			function (_p20) {
+				var _p21 = _p20;
+				return A2(
+					_Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectWithFragment,
 					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragTextured,
-					_Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitSquare,
-					{transform: _p0._0.transform, texture: _p0._0.texture, cameraProj: cameraProj, tileWH: _p0._0.tileWH});
-			case 'AnimatedSprite':
-				return A4(
-					_Zinggi$elm_2d_game_examples$Game_TwoD_Render$renderTransparent,
-					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$vertTexturedRect,
+					{
+						transform: A4(_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$makeTransform, _p22, _p18.rotation, _p23, _p18.pivot),
+						texture: _p19._0,
+						tileWH: _elm_community$linear_algebra$Math_Vector2$fromTuple(_p18.tiling),
+						cameraProj: A2(_Zinggi$elm_2d_game_examples$Game_TwoD_Camera$view, _p21.camera, _p21.screenSize)
+					});
+			});
+	} else {
+		return A2(
+			_Zinggi$elm_2d_game_examples$Game_TwoD_Render$shapeZ,
+			_Zinggi$elm_2d_game_examples$Game_TwoD_Render$Rectangle,
+			{position: _p22, size: _p23, color: _elm_lang$core$Color$grey});
+	}
+};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$spriteZ = function (_p24) {
+	var _p25 = _p24;
+	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$spriteWithOptions(
+		{
+			texture: _p25.texture,
+			position: _p25.position,
+			size: _p25.size,
+			tiling: {ctor: '_Tuple2', _0: 1, _1: 1},
+			rotation: 0,
+			pivot: {ctor: '_Tuple2', _0: 0, _1: 0}
+		});
+};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$sprite = function (_p26) {
+	var _p27 = _p26;
+	var _p28 = _p27.position;
+	var x = _p28._0;
+	var y = _p28._1;
+	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$spriteZ(
+		{
+			texture: _p27.texture,
+			position: {ctor: '_Tuple3', _0: x, _1: y, _2: 0},
+			size: _p27.size
+		});
+};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$animatedSpriteWithOptions = function (_p29) {
+	var _p30 = _p29;
+	var _p35 = _p30.size;
+	var _p34 = _p30.position;
+	var _p31 = _p30.texture;
+	if (_p31.ctor === 'Just') {
+		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$veryCustom(
+			function (_p32) {
+				var _p33 = _p32;
+				return A2(
+					_Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectWithFragment,
 					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragAnimTextured,
-					_Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitSquare,
-					{transform: _p0._0.transform, texture: _p0._0.texture, cameraProj: cameraProj, bottomLeft: _p0._0.bottomLeft, topRight: _p0._0.topRight, duration: _p0._0.duration, time: time, numberOfFrames: _p0._0.numberOfFrames});
-			case 'ParallaxScroll':
-				var pos = _Zinggi$elm_2d_game_examples$Game_TwoD_Camera$getPosition(camera);
-				var size = A2(_Zinggi$elm_2d_game_examples$Game_TwoD_Camera$getViewSize, screenSize, camera);
+					{
+						transform: A4(_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$makeTransform, _p34, _p30.rotation, _p35, _p30.pivot),
+						texture: _p31._0,
+						bottomLeft: _elm_community$linear_algebra$Math_Vector2$fromTuple(_p30.bottomLeft),
+						topRight: _elm_community$linear_algebra$Math_Vector2$fromTuple(_p30.topRight),
+						duration: _p30.duration,
+						numberOfFrames: _p30.numberOfFrames,
+						cameraProj: A2(_Zinggi$elm_2d_game_examples$Game_TwoD_Camera$view, _p33.camera, _p33.screenSize),
+						time: _p33.time
+					});
+			});
+	} else {
+		return A2(
+			_Zinggi$elm_2d_game_examples$Game_TwoD_Render$shapeZ,
+			_Zinggi$elm_2d_game_examples$Game_TwoD_Render$Rectangle,
+			{position: _p34, size: _p35, color: _elm_lang$core$Color$grey});
+	}
+};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$animatedSpriteZ = function (_p36) {
+	var _p37 = _p36;
+	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$animatedSpriteWithOptions(
+		{
+			texture: _p37.texture,
+			position: _p37.position,
+			size: _p37.size,
+			bottomLeft: _p37.bottomLeft,
+			topRight: _p37.topRight,
+			duration: _p37.duration,
+			numberOfFrames: _p37.numberOfFrames,
+			rotation: 0,
+			pivot: {ctor: '_Tuple2', _0: 0, _1: 0}
+		});
+};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$animatedSprite = function (_p38) {
+	var _p39 = _p38;
+	var _p40 = _p39.position;
+	var x = _p40._0;
+	var y = _p40._1;
+	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$animatedSpriteZ(
+		_elm_lang$core$Native_Utils.update(
+			_p39,
+			{
+				position: {ctor: '_Tuple3', _0: x, _1: y, _2: 0}
+			}));
+};
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$parallaxScrollWithOptions = function (_p41) {
+	var _p42 = _p41;
+	var _p47 = _p42.z;
+	var _p43 = _p42.texture;
+	if (_p43.ctor === 'Nothing') {
+		return A2(
+			_Zinggi$elm_2d_game_examples$Game_TwoD_Render$shapeZ,
+			_Zinggi$elm_2d_game_examples$Game_TwoD_Render$Rectangle,
+			{
+				position: {ctor: '_Tuple3', _0: 0, _1: 0, _2: _p47},
+				size: {ctor: '_Tuple2', _0: 1, _1: 1},
+				color: _elm_lang$core$Color$grey
+			});
+	} else {
+		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$veryCustom(
+			function (_p44) {
+				var _p45 = _p44;
+				var _p46 = _p45.camera;
 				return A4(
 					_Zinggi$elm_2d_game_examples$Game_TwoD_Render$renderTransparent,
 					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$vertParallaxScroll,
 					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$fragTextured,
 					_Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitSquare,
 					{
-						texture: _p0._0.texture,
-						tileWH: _p0._0.tileWH,
-						scrollSpeed: _p0._0.scrollSpeed,
-						z: _p0._0.z,
-						offset: _p0._0.offset,
-						cameraPos: _elm_community$linear_algebra$Math_Vector2$fromTuple(pos),
-						cameraSize: _elm_community$linear_algebra$Math_Vector2$fromTuple(size)
+						scrollSpeed: _elm_community$linear_algebra$Math_Vector2$fromTuple(_p42.scrollSpeed),
+						z: _p47,
+						tileWH: _elm_community$linear_algebra$Math_Vector2$fromTuple(_p42.tileWH),
+						texture: _p43._0,
+						offset: _elm_community$linear_algebra$Math_Vector2$fromTuple(_p42.offset),
+						cameraPos: _elm_community$linear_algebra$Math_Vector2$fromTuple(
+							_Zinggi$elm_2d_game_examples$Game_TwoD_Camera$getPosition(_p46)),
+						cameraSize: _elm_community$linear_algebra$Math_Vector2$fromTuple(
+							A2(_Zinggi$elm_2d_game_examples$Game_TwoD_Camera$getViewSize, _p45.screenSize, _p46))
 					});
-			default:
-				return _p0._0(
-					{cameraProj: cameraProj, time: time});
-		}
-	});
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Custom = function (a) {
-	return {ctor: 'Custom', _0: a};
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$customFragment = F2(
-	function (makeUniforms, _p1) {
-		var _p2 = _p1;
-		var _p3 = {ctor: '_Tuple3', _0: _p2.position, _1: _p2.size, _2: _p2.pivot};
-		var x = _p3._0._0;
-		var y = _p3._0._1;
-		var z = _p3._0._2;
-		var w = _p3._1._0;
-		var h = _p3._1._1;
-		var px = _p3._2._0;
-		var py = _p3._2._1;
-		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Custom(
-			function (_p4) {
-				var _p5 = _p4;
-				return A4(
-					_elm_community$webgl$WebGL$entity,
-					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$vertTexturedRect,
-					_p2.fragmentShader,
-					_Zinggi$elm_2d_game_examples$Game_TwoD_Shapes$unitSquare,
-					makeUniforms(
-						{
-							transform: A4(
-								_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$makeTransform,
-								{ctor: '_Tuple3', _0: x, _1: y, _2: z},
-								_p2.rotation,
-								{ctor: '_Tuple2', _0: w, _1: h},
-								{ctor: '_Tuple2', _0: px, _1: py}),
-							cameraProj: _p5.cameraProj,
-							time: _p5.time
-						}));
-			});
-	});
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$veryCustom = _Zinggi$elm_2d_game_examples$Game_TwoD_Render$Custom;
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$ParallaxScroll = function (a) {
-	return {ctor: 'ParallaxScroll', _0: a};
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$AnimatedSprite = function (a) {
-	return {ctor: 'AnimatedSprite', _0: a};
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$TexturedRectangle = function (a) {
-	return {ctor: 'TexturedRectangle', _0: a};
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$ColoredRectangle = function (a) {
-	return {ctor: 'ColoredRectangle', _0: a};
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangleWithOptions = function (_p6) {
-	var _p7 = _p6;
-	var _p8 = {ctor: '_Tuple3', _0: _p7.pivot, _1: _p7.size, _2: _p7.position};
-	var px = _p8._0._0;
-	var py = _p8._0._1;
-	var w = _p8._1._0;
-	var h = _p8._1._1;
-	var x = _p8._2._0;
-	var y = _p8._2._1;
-	var z = _p8._2._2;
-	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$ColoredRectangle(
-		{
-			transform: A4(
-				_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$makeTransform,
-				{ctor: '_Tuple3', _0: x, _1: y, _2: z},
-				_p7.rotation,
-				{ctor: '_Tuple2', _0: w, _1: h},
-				{ctor: '_Tuple2', _0: px, _1: py}),
-			color: _Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$colorToRGBVector(_p7.color)
-		});
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangleZ = function (_p9) {
-	var _p10 = _p9;
-	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangleWithOptions(
-		{
-			color: _p10.color,
-			position: _p10.position,
-			size: _p10.size,
-			rotation: 0,
-			pivot: {ctor: '_Tuple2', _0: 0, _1: 0}
-		});
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangle = function (_p11) {
-	var _p12 = _p11;
-	var _p13 = _p12.position;
-	var x = _p13._0;
-	var y = _p13._1;
-	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangleZ(
-		{
-			size: _p12.size,
-			position: {ctor: '_Tuple3', _0: x, _1: y, _2: 0},
-			color: _p12.color
-		});
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$spriteWithOptions = function (_p14) {
-	var _p15 = _p14;
-	var _p19 = _p15.size;
-	var _p18 = _p15.position;
-	var _p16 = {ctor: '_Tuple4', _0: _p19, _1: _p18, _2: _p15.pivot, _3: _p15.tiling};
-	var w = _p16._0._0;
-	var h = _p16._0._1;
-	var x = _p16._1._0;
-	var y = _p16._1._1;
-	var z = _p16._1._2;
-	var px = _p16._2._0;
-	var py = _p16._2._1;
-	var tw = _p16._3._0;
-	var th = _p16._3._1;
-	var _p17 = _p15.texture;
-	if (_p17.ctor === 'Just') {
-		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$TexturedRectangle(
-			{
-				transform: A4(
-					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$makeTransform,
-					{ctor: '_Tuple3', _0: x, _1: y, _2: z},
-					_p15.rotation,
-					{ctor: '_Tuple2', _0: w, _1: h},
-					{ctor: '_Tuple2', _0: px, _1: py}),
-				texture: _p17._0,
-				tileWH: A2(_elm_community$linear_algebra$Math_Vector2$vec2, tw, th)
-			});
-	} else {
-		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangleZ(
-			{position: _p18, size: _p19, color: _elm_lang$core$Color$grey});
-	}
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$spriteZ = function (_p20) {
-	var _p21 = _p20;
-	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$spriteWithOptions(
-		{
-			texture: _p21.texture,
-			position: _p21.position,
-			size: _p21.size,
-			tiling: {ctor: '_Tuple2', _0: 1, _1: 1},
-			rotation: 0,
-			pivot: {ctor: '_Tuple2', _0: 0, _1: 0}
-		});
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$sprite = function (_p22) {
-	var _p23 = _p22;
-	var _p24 = _p23.position;
-	var x = _p24._0;
-	var y = _p24._1;
-	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$spriteZ(
-		{
-			texture: _p23.texture,
-			position: {ctor: '_Tuple3', _0: x, _1: y, _2: 0},
-			size: _p23.size
-		});
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$animatedSpriteWithOptions = function (_p25) {
-	var _p26 = _p25;
-	var _p30 = _p26.size;
-	var _p29 = _p26.position;
-	var _p27 = {ctor: '_Tuple5', _0: _p29, _1: _p30, _2: _p26.bottomLeft, _3: _p26.topRight, _4: _p26.pivot};
-	var x = _p27._0._0;
-	var y = _p27._0._1;
-	var z = _p27._0._2;
-	var w = _p27._1._0;
-	var h = _p27._1._1;
-	var blx = _p27._2._0;
-	var bly = _p27._2._1;
-	var trx = _p27._3._0;
-	var $try = _p27._3._1;
-	var px = _p27._4._0;
-	var py = _p27._4._1;
-	var _p28 = _p26.texture;
-	if (_p28.ctor === 'Nothing') {
-		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangleZ(
-			{position: _p29, size: _p30, color: _elm_lang$core$Color$grey});
-	} else {
-		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$AnimatedSprite(
-			{
-				transform: A4(
-					_Zinggi$elm_2d_game_examples$Game_TwoD_Shaders$makeTransform,
-					{ctor: '_Tuple3', _0: x, _1: y, _2: z},
-					_p26.rotation,
-					{ctor: '_Tuple2', _0: w, _1: h},
-					{ctor: '_Tuple2', _0: px, _1: py}),
-				texture: _p28._0,
-				bottomLeft: A2(_elm_community$linear_algebra$Math_Vector2$vec2, blx, bly),
-				topRight: A2(_elm_community$linear_algebra$Math_Vector2$vec2, trx, $try),
-				duration: _p26.duration,
-				numberOfFrames: _p26.numberOfFrames
 			});
 	}
 };
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$animatedSpriteZ = function (_p31) {
-	var _p32 = _p31;
-	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$animatedSpriteWithOptions(
-		{
-			texture: _p32.texture,
-			position: _p32.position,
-			size: _p32.size,
-			bottomLeft: _p32.bottomLeft,
-			topRight: _p32.topRight,
-			duration: _p32.duration,
-			numberOfFrames: _p32.numberOfFrames,
-			rotation: 0,
-			pivot: {ctor: '_Tuple2', _0: 0, _1: 0}
-		});
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$animatedSprite = function (_p33) {
-	var _p34 = _p33;
-	var _p35 = _p34.position;
-	var x = _p35._0;
-	var y = _p35._1;
-	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$animatedSpriteZ(
-		_elm_lang$core$Native_Utils.update(
-			_p34,
-			{
-				position: {ctor: '_Tuple3', _0: x, _1: y, _2: 0}
-			}));
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$parallaxScrollWithOptions = function (_p36) {
-	var _p37 = _p36;
-	var _p39 = _p37.z;
-	var _p38 = _p37.texture;
-	if (_p38.ctor === 'Nothing') {
-		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangleZ(
-			{
-				position: {ctor: '_Tuple3', _0: 0, _1: 0, _2: _p39},
-				size: {ctor: '_Tuple2', _0: 1, _1: 1},
-				color: _elm_lang$core$Color$grey
-			});
-	} else {
-		return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$ParallaxScroll(
-			{
-				scrollSpeed: _elm_community$linear_algebra$Math_Vector2$fromTuple(_p37.scrollSpeed),
-				z: _p39,
-				tileWH: _elm_community$linear_algebra$Math_Vector2$fromTuple(_p37.tileWH),
-				texture: _p38._0,
-				offset: _elm_community$linear_algebra$Math_Vector2$fromTuple(_p37.offset)
-			});
-	}
-};
-var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$parallaxScroll = function (_p40) {
-	var _p41 = _p40;
+var _Zinggi$elm_2d_game_examples$Game_TwoD_Render$parallaxScroll = function (_p48) {
+	var _p49 = _p48;
 	return _Zinggi$elm_2d_game_examples$Game_TwoD_Render$parallaxScrollWithOptions(
 		{
-			scrollSpeed: _p41.scrollSpeed,
-			tileWH: _p41.tileWH,
-			texture: _p41.texture,
-			z: _p41.z,
+			scrollSpeed: _p49.scrollSpeed,
+			tileWH: _p49.tileWH,
+			texture: _p49.texture,
+			z: _p49.z,
 			offset: {ctor: '_Tuple2', _0: 0.5, _1: 0.5}
 		});
 };
@@ -12709,7 +12671,6 @@ var _elm_lang$html$Html_Attributes$style = _elm_lang$virtual_dom$VirtualDom$styl
 var _Zinggi$elm_2d_game_examples$Game_TwoD$renderWithOptions = F3(
 	function (attributes, _p0, objects) {
 		var _p1 = _p0;
-		var _p4 = _p1.camera;
 		var _p2 = _p1.size;
 		var w = _p2._0;
 		var h = _p2._1;
@@ -12720,10 +12681,6 @@ var _Zinggi$elm_2d_game_examples$Game_TwoD$renderWithOptions = F3(
 		};
 		var wf = _p3._0;
 		var hf = _p3._1;
-		var cameraProj = A2(
-			_Zinggi$elm_2d_game_examples$Game_TwoD_Camera$view,
-			_p4,
-			{ctor: '_Tuple2', _0: wf, _1: hf});
 		return A3(
 			_elm_community$webgl$WebGL$toHtmlWith,
 			{
@@ -12753,12 +12710,11 @@ var _Zinggi$elm_2d_game_examples$Game_TwoD$renderWithOptions = F3(
 				attributes),
 			A2(
 				_elm_lang$core$List$map,
-				A4(
+				A3(
 					_Zinggi$elm_2d_game_examples$Game_TwoD_Render$toWebGl,
 					_p1.time,
-					_p4,
-					{ctor: '_Tuple2', _0: wf, _1: hf},
-					cameraProj),
+					_p1.camera,
+					{ctor: '_Tuple2', _0: wf, _1: hf}),
 				objects));
 	});
 var _Zinggi$elm_2d_game_examples$Game_TwoD$renderCenteredWithOptions = F4(
@@ -12823,19 +12779,23 @@ var _Zinggi$elm_2d_game_examples$BouncyBall$view = function (m) {
 		},
 		{
 			ctor: '::',
-			_0: _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangle(
+			_0: A2(
+				_Zinggi$elm_2d_game_examples$Game_TwoD_Render$shape,
+				_Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangle,
 				{
-					color: _elm_lang$core$Color$blue,
-					position: m.position,
-					size: {ctor: '_Tuple2', _0: 0.2, _1: 0.2}
+					color: _elm_lang$core$Color$green,
+					position: {ctor: '_Tuple2', _0: -10, _1: -10},
+					size: {ctor: '_Tuple2', _0: 20, _1: 10}
 				}),
 			_1: {
 				ctor: '::',
-				_0: _Zinggi$elm_2d_game_examples$Game_TwoD_Render$rectangle(
+				_0: A2(
+					_Zinggi$elm_2d_game_examples$Game_TwoD_Render$shape,
+					_Zinggi$elm_2d_game_examples$Game_TwoD_Render$circle,
 					{
-						color: _elm_lang$core$Color$green,
-						position: {ctor: '_Tuple2', _0: -10, _1: -10},
-						size: {ctor: '_Tuple2', _0: 20, _1: 10}
+						color: _elm_lang$core$Color$blue,
+						position: m.position,
+						size: {ctor: '_Tuple2', _0: 0.5, _1: 0.5}
 					}),
 				_1: {ctor: '[]'}
 			}
