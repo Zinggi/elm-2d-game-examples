@@ -1,26 +1,25 @@
-module MarioLike exposing (..)
-
-import Html exposing (Html, div)
-import Html.Attributes as Attr
-import Task
-import AnimationFrame
-import Window
-import Keyboard.Extra
-
+module MarioLike exposing (main)
 
 --
 
+import Browser
+import Browser.Dom exposing (getViewport)
+import Browser.Events exposing (onAnimationFrameDelta, onResize)
 import Game.Resources as Resources exposing (Resources)
-import Game.TwoD.Render as Render exposing (Renderable)
 import Game.TwoD as Game
 import Game.TwoD.Camera as Camera exposing (Camera)
+import Game.TwoD.Render as Render exposing (Renderable)
+import Html exposing (Html, div)
+import Html.Attributes as Attr
+import Keyboard
+import Keyboard.Arrows
+import Task
 
 
-{-|
-
-This is a copy of the original Mario game example previously found on the examples for elm.
+{-| This is a copy of the original Mario game example previously found on the examples for elm.
 
 I made some modifications, but it still is essentially the same, except now with my library and other textures.
+
 -}
 
 
@@ -29,10 +28,10 @@ I made some modifications, but it still is essentially the same, except now with
 
 
 type Msg
-    = ScreenSize Window.Size
+    = ScreenSize Int Int
     | Tick Float
     | Resources Resources.Msg
-    | Keys Keyboard.Extra.Msg
+    | Keys Keyboard.Msg
 
 
 
@@ -42,7 +41,7 @@ type Msg
 type alias Model =
     { mario : Mario
     , resources : Resources
-    , keys : Keyboard.Extra.Model
+    , keys : List Keyboard.Key
     , time : Float
     , screen : ( Int, Int )
     , camera : Camera
@@ -73,23 +72,20 @@ mario =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
-    let
-        ( keys, cmd ) =
-            Keyboard.Extra.init
-    in
-        { mario = mario
-        , resources = Resources.init
-        , keys = keys
-        , time = 0
-        , screen = ( 800, 600 )
-        , camera = Camera.fixedWidth 8 ( 0, 0 )
-        }
-            ! [ getScreenSize
-              , Cmd.map Resources (Resources.loadTextures [ "images/guy.png", "images/grass.png", "images/cloud_bg.png" ])
-              , Cmd.map Keys cmd
-              ]
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { mario = mario
+      , resources = Resources.init
+      , keys = []
+      , time = 0
+      , screen = ( 800, 600 )
+      , camera = Camera.fixedWidth 8 ( 0, 0 )
+      }
+    , Cmd.batch
+        [ Cmd.map Resources (Resources.loadTextures [ "images/guy.png", "images/grass.png", "images/cloud_bg.png" ])
+        , Task.perform (\{ viewport } -> ScreenSize (round viewport.width) (round viewport.height)) getViewport
+        ]
+    )
 
 
 type alias Input =
@@ -103,79 +99,88 @@ type alias Input =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ScreenSize { width, height } ->
-            { model | screen = ( width, height ) } ! []
+        ScreenSize width height ->
+            ( { model | screen = ( width, height ) }
+            , Cmd.none
+            )
 
         Tick dt ->
-            { model
+            ( { model
                 | mario = tick dt model.keys model.mario
                 , time = dt + model.time
                 , camera = Camera.moveTo ( model.mario.x, model.mario.y + 0.75 ) model.camera
-            }
-                ! []
+              }
+            , Cmd.none
+            )
 
-        Resources msg ->
-            { model | resources = Resources.update msg model.resources } ! []
+        Resources rMsg ->
+            ( { model | resources = Resources.update rMsg model.resources }
+            , Cmd.none
+            )
 
         Keys keyMsg ->
             let
-                ( keys, cmd ) =
-                    Keyboard.Extra.update keyMsg model.keys
+                keys =
+                    Keyboard.update keyMsg model.keys
             in
-                { model | keys = keys } ! [ Cmd.map Keys cmd ]
+            ( { model | keys = keys }, Cmd.none )
 
 
-tick : Float -> Keyboard.Extra.Model -> Mario -> Mario
-tick dt keys mario =
+tick : Float -> List Keyboard.Key -> Mario -> Mario
+tick dt keys guy =
     let
         arrows =
-            Keyboard.Extra.arrows keys
+            Keyboard.Arrows.arrows keys
     in
-        mario
-            |> gravity dt
-            |> jump arrows
-            |> walk arrows
-            |> physics dt
+    guy
+        |> gravity dt
+        |> jump arrows
+        |> walk arrows
+        |> physics dt
 
 
 jump : Input -> Mario -> Mario
-jump keys mario =
-    if keys.y > 0 && mario.vy == 0 then
-        { mario | vy = 4.0 }
+jump keys guy =
+    if keys.y > 0 && guy.vy == 0 then
+        { guy | vy = 4.0 }
+
     else
-        mario
+        guy
 
 
 gravity : Float -> Mario -> Mario
-gravity dt mario =
-    { mario
+gravity dt guy =
+    { guy
         | vy =
-            if mario.y > 0 then
-                mario.vy - 9.81 * dt
+            if guy.y > 0 then
+                guy.vy - 9.81 * dt
+
             else
                 0
     }
 
 
 physics : Float -> Mario -> Mario
-physics dt mario =
-    { mario
-        | x = mario.x + dt * mario.vx
-        , y = max 0 (mario.y + dt * mario.vy)
+physics dt guy =
+    { guy
+        | x = guy.x + dt * guy.vx
+        , y = max 0 (guy.y + dt * guy.vy)
     }
 
 
 walk : Input -> Mario -> Mario
-walk keys mario =
-    { mario
+walk keys guy =
+    { guy
         | vx = toFloat keys.x
         , dir =
             if keys.x < 0 then
                 Left
+
             else if keys.x > 0 then
                 Right
+
             else
-                mario.dir
+                guy.dir
     }
 
 
@@ -184,7 +189,7 @@ walk keys mario =
 
 
 render : Model -> List Renderable
-render { mario, resources, camera } =
+render ({ resources, camera } as model) =
     List.concat
         [ renderBackground resources
         , [ Render.spriteWithOptions
@@ -195,7 +200,7 @@ render { mario, resources, camera } =
                 , pivot = ( 0, 0 )
                 , tiling = ( 10, 5 )
                 }
-          , renderMario resources mario
+          , renderMario resources model.mario
           ]
         ]
 
@@ -223,25 +228,26 @@ renderMario resources { x, y, dir } =
         d =
             if dir == Left then
                 -1
+
             else
                 1
     in
-        Render.animatedSpriteWithOptions
-            { position = ( x, y, 0 )
-            , size = ( d * 0.3, 0.8 )
-            , texture = Resources.getTexture "images/guy.png" resources
-            , bottomLeft = ( 0, 0 )
-            , topRight = ( 1, 1 )
-            , duration = 1
-            , numberOfFrames = 11
-            , rotation = 0
-            , pivot = ( 0.5, 0 )
-            }
+    Render.animatedSpriteWithOptions
+        { position = ( x, y, 0 )
+        , size = ( d * 0.3, 0.8 )
+        , texture = Resources.getTexture "images/guy.png" resources
+        , bottomLeft = ( 0, 0 )
+        , topRight = ( 1, 1 )
+        , duration = 1
+        , numberOfFrames = 11
+        , rotation = 0
+        , pivot = ( 0.5, 0 )
+        }
 
 
 view : Model -> Html msg
 view ({ time, screen } as model) =
-    div [ Attr.style [ ( "overflow", "hidden" ), ( "width", "100%" ), ( "height", "100%" ) ] ]
+    div [ Attr.style "overflow" "hidden", Attr.style "width" "100%", Attr.style "height" "100%" ]
         [ Game.render
             { camera = model.camera
             , time = time
@@ -251,9 +257,9 @@ view ({ time, screen } as model) =
         ]
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.element
         { update = update
         , init = init
         , view = view
@@ -261,15 +267,10 @@ main =
         }
 
 
-getScreenSize : Cmd Msg
-getScreenSize =
-    Task.perform ScreenSize (Window.size)
-
-
 subs : Model -> Sub Msg
 subs model =
     Sub.batch
-        [ Window.resizes ScreenSize
-        , Sub.map Keys Keyboard.Extra.subscriptions
-        , AnimationFrame.diffs ((\dt -> dt / 1000) >> Tick)
+        [ onResize ScreenSize
+        , Sub.map Keys Keyboard.subscriptions
+        , onAnimationFrameDelta ((\dt -> dt / 1000) >> Tick)
         ]

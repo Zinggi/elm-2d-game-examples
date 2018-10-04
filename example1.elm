@@ -1,17 +1,16 @@
-module Example1 exposing (..)
-
-import Color
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import AnimationFrame
-
+module Example1 exposing (Model, Msg(..), camera, init, main, renderBar, renderBox, renderGuy, renderRect, subs, update, view)
 
 --
 
+import Browser
+import Browser.Events exposing (onAnimationFrameDelta)
+import Color
+import Game.Resources as Resources exposing (Resources)
+import Game.TwoD as Game
 import Game.TwoD.Camera as Camera exposing (Camera)
 import Game.TwoD.Render as Render exposing (Renderable, rectangle, ring)
-import Game.TwoD as Game
-import Game.Resources as Resources exposing (Resources)
+import Html exposing (..)
+import Html.Attributes exposing (..)
 
 
 type alias Model =
@@ -30,16 +29,17 @@ type Msg
     | Resources Resources.Msg
 
 
-init : ( Model, Cmd Msg )
-init =
-    { resources = Resources.init
-    , time = 0
-    }
-        ! [ Cmd.map Resources (Resources.loadTextures [ "images/box.png", "images/guy.png" ]) ]
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { resources = Resources.init
+      , time = 0
+      }
+    , Cmd.map Resources (Resources.loadTextures [ "images/box.png", "images/guy.png" ])
+    )
 
 
 subs m =
-    AnimationFrame.diffs Tick
+    onAnimationFrameDelta Tick
 
 
 renderRect shape size ( x, y ) isRed =
@@ -49,6 +49,7 @@ renderRect shape size ( x, y ) isRed =
         , color =
             if isRed then
                 Color.red
+
             else
                 Color.blue
         }
@@ -57,7 +58,7 @@ renderRect shape size ( x, y ) isRed =
 renderBar r =
     Render.shapeWithOptions rectangle
         { position = ( 0, -0.01, 0 )
-        , rotation = (r * pi * 2)
+        , rotation = r * pi * 2
         , size = ( 3, 0.02 )
         , pivot = ( 0, 0 )
         , color = Color.black
@@ -71,24 +72,28 @@ renderBox res ( w, h ) ( x, y ) r tileY =
         , rotation = r
         , pivot = ( 0.5, 0.5 )
         , tiling = ( 1, tileY )
-        , texture = (Resources.getTexture "images/box.png" res)
+        , texture = Resources.getTexture "images/box.png" res
         }
 
 
 update msg model =
     case msg of
-        Resources msg ->
-            { model | resources = Resources.update msg model.resources } ! []
+        Resources rMsg ->
+            ( { model | resources = Resources.update rMsg model.resources }
+            , Cmd.none
+            )
 
         Tick dt ->
-            { model | time = model.time + dt } ! []
+            ( { model | time = model.time + dt }
+            , Cmd.none
+            )
 
 
 view : Model -> Html Msg
 view m =
     Game.renderCenteredWithOptions
-        [ style [ ( "background-color", "aliceblue" ) ] ]
-        [ style [ ( "border", "cadetblue" ), ( "border-style", "solid" ) ] ]
+        [ style "background-color" "aliceblue" ]
+        [ style "border" "cadetblue", style "border-style" "solid" ]
         { time = m.time, camera = camera, size = ( 800, 600 ) }
         [ renderRect ring ( 1, 1 ) ( 0, 0 ) True
         , renderRect rectangle ( 1, 2 ) ( 1, 0 ) False
@@ -115,9 +120,9 @@ renderGuy res ( x, y ) flip d =
         }
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    program
+    Browser.element
         { view = view
         , update = update
         , init = init

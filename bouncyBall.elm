@@ -1,15 +1,14 @@
-module BouncyBall exposing (..)
-
-import Color
-import Html exposing (..)
-import AnimationFrame
-
+module BouncyBall exposing (Model, Msg(..), init, main, subs, tick, update, view)
 
 --
 
-import Game.TwoD.Camera as Camera exposing (Camera)
-import Game.TwoD.Render as Render exposing (Renderable, rectangle, circle)
+import Browser
+import Browser.Events exposing (onAnimationFrameDelta)
+import Color
 import Game.TwoD as Game
+import Game.TwoD.Camera as Camera exposing (Camera)
+import Game.TwoD.Render as Render exposing (Renderable, circle, rectangle)
+import Html exposing (..)
 
 
 type alias Model =
@@ -22,22 +21,25 @@ type Msg
     = Tick Float
 
 
-init : ( Model, Cmd Msg )
-init =
-    { position = ( 0, 3 )
-    , velocity = ( 0, 0 )
-    }
-        ! []
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { position = ( 0, 3 )
+      , velocity = ( 0, 0 )
+      }
+    , Cmd.none
+    )
 
 
 subs m =
-    AnimationFrame.diffs Tick
+    onAnimationFrameDelta Tick
 
 
 update msg model =
     case msg of
         Tick dt ->
-            tick (dt / 1000) model ! []
+            ( tick (dt / 1000) model
+            , Cmd.none
+            )
 
 
 tick dt { position, velocity } =
@@ -51,10 +53,11 @@ tick dt { position, velocity } =
         ( newP, newV ) =
             if y <= 0 then
                 ( ( x, 0.00001 ), ( 0, -vy_ * 0.9 ) )
+
             else
                 ( ( x, y + vy_ * dt ), ( 0, vy_ ) )
     in
-        Model newP newV
+    Model newP newV
 
 
 view : Model -> Html Msg
@@ -65,9 +68,9 @@ view m =
         ]
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    program
+    Browser.element
         { view = view
         , update = update
         , init = init
